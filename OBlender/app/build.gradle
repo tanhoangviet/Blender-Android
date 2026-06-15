@@ -2,9 +2,11 @@ plugins {
     id 'com.android.application'
 }
 
+def usePrebuiltBlender = project.hasProperty('usePrebuiltBlender') && project.property('usePrebuiltBlender').toString().toBoolean()
+
 android {
     compileSdkVersion 30
-    buildToolsVersion '30.0.3'
+    buildToolsVersion '29.0.3'
 
     defaultConfig {
         applicationId "com.epai.oblender"
@@ -14,8 +16,14 @@ android {
         versionName "0.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        externalNativeBuild {
-            cmake {
+        if (!usePrebuiltBlender) {
+            externalNativeBuild {
+                cmake {
+                    abiFilters "arm64-v8a"
+                }
+            }
+        } else {
+            ndk {
                 abiFilters "arm64-v8a"
             }
         }
@@ -27,17 +35,21 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version "3.10.2"
+    if (!usePrebuiltBlender) {
+        externalNativeBuild {
+            cmake {
+                path "src/main/cpp/CMakeLists.txt"
+                version "3.10.2"
+            }
         }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    ndkVersion '21.4.7075529'
+    if (!usePrebuiltBlender) {
+        ndkVersion '21.4.7075529'
+    }
 	packagingOptions {
         pickFirst 'lib/arm64-v8a/libboostiostreams.so'
         pickFirst 'lib/arm64-v8a/libboostlocale.so'
@@ -147,7 +159,6 @@ android {
         pickFirst 'lib/arm64-v8a/libopenpgl.so'
         pickFirst 'lib/arm64-v8a/libboostpython.so'
     }
-    ndkVersion '21.4.7075529'
     android.applicationVariants.all {
         variant ->
             variant.outputs.all {

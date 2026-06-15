@@ -97,6 +97,9 @@ public class InstallOBLFiles {
             copyAsset(assetManager,
                     "scripts/obl_vn_startup.py",
                     oblFilePath.mStringConfigPath + "scripts" + File.separator + "obl_vn_startup.py");
+            copyAsset(assetManager,
+                    "scripts/startup/obl_vn_startup.py",
+                    oblFilePath.mStringConfigPath + "scripts" + File.separator + "startup" + File.separator + "obl_vn_startup.py");
         }
         return oblFilePath;
     }
