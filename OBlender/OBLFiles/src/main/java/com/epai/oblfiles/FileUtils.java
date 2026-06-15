@@ -236,23 +236,24 @@ public final class FileUtils {
     }
     public static String getExternStorageDir(Context context, String strSubDir) {
         String directoryPath;
-        if (MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {//判断外部存储是否可用
-            String stringpackagename = getAppProcessName(context);
-            String strdir = stringpackagename + File.separator + strSubDir;
-            directoryPath = Environment.getExternalStoragePublicDirectory(strdir).getAbsolutePath();
+        File appExternal = context.getExternalFilesDir(strSubDir);
+        if (appExternal != null) {
+            directoryPath = appExternal.getAbsolutePath();
+        } else if (MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {//判断外部存储是否可用
+            File publicRoot = Environment.getExternalStoragePublicDirectory(getAppProcessName(context));
+            directoryPath = new File(publicRoot, strSubDir).getAbsolutePath();
         } else {//没外部存储就使用内部存储
-            directoryPath = context.getFilesDir() + File.separator + strSubDir;
+            directoryPath = new File(context.getFilesDir(), strSubDir).getAbsolutePath();
         }
         File file = new File(directoryPath);
         if (!file.exists()) {//判断文件目录是否存在
             boolean mkdirs = file.mkdirs();
             if (!mkdirs) {
-                File fileexternal = context.getExternalFilesDir(strSubDir);
-                if (fileexternal != null) {
-                    return file.getAbsolutePath();
-                } else {
-                    return null;
+                File fallback = new File(context.getFilesDir(), strSubDir);
+                if (!fallback.exists() && !fallback.mkdirs()) {
+                    return context.getFilesDir().getAbsolutePath();
                 }
+                return fallback.getAbsolutePath();
             } else {
                 return directoryPath;
             }

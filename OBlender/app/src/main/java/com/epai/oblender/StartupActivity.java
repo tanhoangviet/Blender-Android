@@ -101,6 +101,11 @@ public class StartupActivity extends AppCompatActivity {
 
     //  检查是否有往外部写文件权限
     private boolean checkWriteExternalFilePermission() {
+        // App data is copied into the app-specific external files directory, which does not
+        // require broad storage access on modern Android versions.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            return true;
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // 先判断有没有权限
             return Environment.isExternalStorageManager();
