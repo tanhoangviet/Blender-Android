@@ -70,6 +70,7 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 	private final InputManager mInputManager;
 	private HardwareKeyboardListener mHardwareKeyboardListener;
 	private boolean mLastHardwareKeyboardConnected = false;
+	private boolean mNativeInputReady = false;
 //	private final GestureDetector gestureDetector;
 //	private final ScaleGestureDetector scaleGestureDetector;
 //	private final GodotGestureHandler godotGestureHandler;
@@ -87,8 +88,16 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 
 	public GodotInputHandler(GodotRenderView godotView) {
 		mRenderView = godotView;
-		mInputManager = (InputManager)godotView.getView().getContext().getSystemService(Context.INPUT_SERVICE);
-		mInputManager.registerInputDeviceListener(this, null);
+		InputManager inputManager = null;
+		try {
+			inputManager = (InputManager)godotView.getView().getContext().getSystemService(Context.INPUT_SERVICE);
+			if (inputManager != null) {
+				inputManager.registerInputDeviceListener(this, null);
+			}
+		} catch (RuntimeException error) {
+			Log.w(TAG, "Unable to register input device listener", error);
+		}
+		mInputManager = inputManager;
 
 //		this.godotGestureHandler = new GodotGestureHandler();
 //		this.gestureDetector = new GestureDetector(context, godotGestureHandler);
@@ -101,7 +110,11 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 
 	public void destroy() {
 		if (mInputManager != null) {
-			mInputManager.unregisterInputDeviceListener(this);
+			try {
+				mInputManager.unregisterInputDeviceListener(this);
+			} catch (RuntimeException error) {
+				Log.w(TAG, "Unable to unregister input device listener", error);
+			}
 		}
 	}
 
@@ -130,6 +143,25 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 
 	public boolean hasHardwareKeyboard() {
 		return !mHardwareKeyboardIds.isEmpty();
+	}
+
+	public void scanHardwareKeyboardsOnly() {
+		if (mInputManager == null) {
+			return;
+		}
+		try {
+			mHardwareKeyboardIds.clear();
+			int[] deviceIds = mInputManager.getInputDeviceIds();
+			for (int deviceId : deviceIds) {
+				InputDevice device = mInputManager.getInputDevice(deviceId);
+				if (isHardwareKeyboardDevice(device)) {
+					mHardwareKeyboardIds.add(deviceId);
+				}
+			}
+			notifyHardwareKeyboardChanged();
+		} catch (RuntimeException error) {
+			Log.w(TAG, "Unable to scan hardware keyboards", error);
+		}
 	}
 
 	public void setHardwareKeyboardListener(HardwareKeyboardListener listener) {
@@ -318,16 +350,24 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 	}
 
 	public void initInputDevices() {
+		if (mInputManager == null) {
+			return;
+		}
+		mNativeInputReady = true;
 		/* initially add input devices*/
-		int[] deviceIds = mInputManager.getInputDeviceIds();
-		for (int deviceId : deviceIds) {
-			InputDevice device = mInputManager.getInputDevice(deviceId);
+		try {
+			int[] deviceIds = mInputManager.getInputDeviceIds();
+			for (int deviceId : deviceIds) {
+				InputDevice device = mInputManager.getInputDevice(deviceId);
 //			if (DEBUG) {
 //				Log.v(TAG, String.format("init() deviceId:%d, Name:%s\n", deviceId, device.getName()));
 //			}
-			onInputDeviceAdded(deviceId);
+				onInputDeviceAdded(deviceId);
+			}
+			notifyHardwareKeyboardChanged();
+		} catch (RuntimeException error) {
+			Log.w(TAG, "Unable to initialize input devices", error);
 		}
-		notifyHardwareKeyboardChanged();
 	}
 
 	private int assignJoystickIdNumber(int deviceId) {
@@ -344,6 +384,10 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 		// Check if the device has not been already added
 
 		if (mJoystickIds.indexOfKey(deviceId) >= 0) {
+			return;
+		}
+
+		if (mInputManager == null) {
 			return;
 		}
 
@@ -401,7 +445,9 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 		}
 		mJoysticksDevices.put(deviceId, joystick);
 
-		GodotLib.joyconnectionchanged(id, true, joystick.name);
+		if (mNativeInputReady) {
+			GodotLib.joyconnectionchanged(id, true, joystick.name);
+		}
 	}
 
 	@Override
@@ -417,7 +463,9 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 		final int godotJoyId = mJoystickIds.get(deviceId);
 		mJoystickIds.delete(deviceId);
 		mJoysticksDevices.delete(deviceId);
-		GodotLib.joyconnectionchanged(godotJoyId, false, "");
+		if (mNativeInputReady) {
+			GodotLib.joyconnectionchanged(godotJoyId, false, "");
+		}
 	}
 
 	@Override

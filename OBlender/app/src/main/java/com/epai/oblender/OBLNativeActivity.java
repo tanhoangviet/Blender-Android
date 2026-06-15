@@ -79,6 +79,7 @@ public class OBLNativeActivity extends NativeActivity
     private OblSettingFragment mOblSettingFragment = null;
     private boolean mBooleanLastOblSettingFragmentVisible=false;
     private boolean mHardwareKeyboardConnected=false;
+    private boolean mDestroyed=false;
 
     public String getClipboard(boolean selection){
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -99,13 +100,12 @@ public class OBLNativeActivity extends NativeActivity
     }
 
     public void SetValue(int type,int value){
-        if (mOblSettingFragment == null) {
-            return;
-        }
-        runOnUiThread(new Runnable() {
+        runSafelyOnUiThread(new Runnable() {
             @Override
             public void run() {
-                mOblSettingFragment.SetValue(type,value);
+                if (mOblSettingFragment != null) {
+                    mOblSettingFragment.SetValue(type,value);
+                }
             }
         });
     }
@@ -123,9 +123,12 @@ public class OBLNativeActivity extends NativeActivity
     }
 
     public void showWindow(int left, int top, int width, int height, int shape_type,String stringInfo) {
-        runOnUiThread(new Runnable() {
+        runSafelyOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if (isActivityDead()) {
+                    return;
+                }
                 if(shape_type==3000){
                     showKeyboardApp(stringInfo,left,top,width,height);
                 }else if (shape_type==4000){
@@ -272,6 +275,7 @@ public class OBLNativeActivity extends NativeActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        mDestroyed = false;
         setContentView(R.layout.activity_main);
 //        android.app.FragmentTransaction fragmentTransaction=getFragmentManager().beginTransaction();
 //        fragmentTransaction.add(fragment,"Fragment");
@@ -344,6 +348,7 @@ public class OBLNativeActivity extends NativeActivity
 
     @Override
     protected void onDestroy() {
+        mDestroyed = true;
         if (inputHandler != null) {
             inputHandler.destroy();
         }
@@ -368,7 +373,7 @@ public class OBLNativeActivity extends NativeActivity
                     handleHardwareKeyboardChanged(connected);
                 }
             });
-            inputHandler.initInputDevices();
+            inputHandler.scanHardwareKeyboardsOnly();
 
             mGodotEditText=new GodotEditText(OBLNativeActivity.this);
 
@@ -398,8 +403,20 @@ public class OBLNativeActivity extends NativeActivity
             hideKeyboardApp();
             return;
         }
+        if (p_existing_text == null) {
+            p_existing_text = "";
+        }
+        GodotEditText.VirtualKeyboardType[] keyboardTypes = GodotEditText.VirtualKeyboardType.values();
+        GodotEditText.VirtualKeyboardType keyboardType = GodotEditText.VirtualKeyboardType.KEYBOARD_TYPE_DEFAULT;
+        if (p_type >= 0 && p_type < keyboardTypes.length) {
+            keyboardType = keyboardTypes[p_type];
+        } else {
+            Log.w(TAG, "Invalid virtual keyboard type " + p_type + ", using default");
+        }
+        int cursorEnd = Math.max(0, Math.min(p_existing_text.length(), p_cursor_end));
+        int cursorStart = Math.max(0, Math.min(cursorEnd, p_cursor_start));
         if (mGodotEditText != null) {
-            mGodotEditText.showKeyboard(p_existing_text, GodotEditText.VirtualKeyboardType.values()[p_type], p_max_input_length, 0, p_existing_text.length());
+            mGodotEditText.showKeyboard(p_existing_text, keyboardType, p_max_input_length, cursorStart, cursorEnd);
         }
 
         InputMethodManager inputMgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -431,7 +448,7 @@ public class OBLNativeActivity extends NativeActivity
     private void handleHardwareKeyboardChanged(boolean connected) {
         mHardwareKeyboardConnected = connected;
         if (connected) {
-            runOnUiThread(new Runnable() {
+            runSafelyOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     hideVirtualKeyboardWindows();
@@ -445,6 +462,29 @@ public class OBLNativeActivity extends NativeActivity
         if (mOblSettingFragment != null) {
             mOblSettingFragment.setVisibility(View.INVISIBLE);
         }
+    }
+
+    private boolean isActivityDead() {
+        return mDestroyed || isFinishing() || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed());
+    }
+
+    private void runSafelyOnUiThread(final Runnable runnable) {
+        if (isActivityDead()) {
+            return;
+        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (isActivityDead()) {
+                    return;
+                }
+                try {
+                    runnable.run();
+                } catch (RuntimeException error) {
+                    Log.e(TAG, "UI callback failed", error);
+                }
+            }
+        });
     }
 
     @Override

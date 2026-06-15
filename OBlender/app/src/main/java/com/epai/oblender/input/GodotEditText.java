@@ -190,7 +190,9 @@ public class GodotEditText extends EditText {
 					edit.mInputWrapper.setOriginText(text);
 					edit.addTextChangedListener(edit.mInputWrapper);
 					final InputMethodManager imm = (InputMethodManager)mRenderView.getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-					imm.showSoftInput(edit, 0);
+					if (imm != null) {
+						imm.showSoftInput(edit, 0);
+					}
 				}
 			} break;
 
@@ -199,7 +201,9 @@ public class GodotEditText extends EditText {
 
 				edit.removeTextChangedListener(mInputWrapper);
 				final InputMethodManager imm = (InputMethodManager)mRenderView.getView().getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-				imm.hideSoftInputFromWindow(edit.getWindowToken(), 0);
+				if (imm != null) {
+					imm.hideSoftInputFromWindow(edit.getWindowToken(), 0);
+				}
 				edit.setVisibility(GONE);
 //				edit.mRenderView.getView().requestFocus();
 			} break;
@@ -228,6 +232,9 @@ public class GodotEditText extends EditText {
 	// ===========================================================
 	@Override
 	public boolean onKeyDown(final int keyCode, final KeyEvent keyEvent) {
+		if (mRenderView == null || mRenderView.getInputHandler() == null) {
+			return super.onKeyDown(keyCode, keyEvent);
+		}
 		/* Let SurfaceView get focus if back key is input. */
 		if (keyCode == KeyEvent.KEYCODE_BACK) {
 //			mRenderView.getView().requestFocus();
@@ -250,6 +257,9 @@ public class GodotEditText extends EditText {
 
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent keyEvent) {
+		if (mRenderView == null || mRenderView.getInputHandler() == null) {
+			return super.onKeyUp(keyCode, keyEvent);
+		}
 		// When a hardware keyboard is connected, all key events come through so we can route them
 		// directly to the engine.
 		// This is not the case when using a soft keyboard, requiring extra processing from this class.
@@ -294,7 +304,26 @@ public class GodotEditText extends EditText {
 			return;
 		}
 
+		if (p_existing_text == null) {
+			p_existing_text = "";
+		}
+		if (p_type == null) {
+			p_type = VirtualKeyboardType.KEYBOARD_TYPE_DEFAULT;
+		}
 		int maxInputLength = (p_max_input_length <= 0) ? Integer.MAX_VALUE : p_max_input_length;
+		int textLength = p_existing_text.length();
+		if (p_cursor_start < -1) {
+			p_cursor_start = -1;
+		}
+		if (p_cursor_end < -1) {
+			p_cursor_end = -1;
+		}
+		if (p_cursor_start >= 0) {
+			p_cursor_start = Math.min(p_cursor_start, textLength);
+		}
+		if (p_cursor_end >= 0) {
+			p_cursor_end = Math.min(p_cursor_end, textLength);
+		}
 		if (p_cursor_start == -1) { // cursor position not given
 			this.mOriginText = p_existing_text;
 			this.mMaxInputLength = maxInputLength;
