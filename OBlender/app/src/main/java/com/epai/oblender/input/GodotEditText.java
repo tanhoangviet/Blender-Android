@@ -43,7 +43,6 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -53,7 +52,6 @@ import java.lang.ref.WeakReference;
 import java.util.Locale;
 
 public class GodotEditText extends EditText {
-	private final String TAG="GodotEditText";
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -276,23 +274,22 @@ public class GodotEditText extends EditText {
 	}
 
 	boolean hasHardwareKeyboard() {
-		//	是否有物理键盘
-		return false;
-//		Configuration config = getResources().getConfiguration();
-//		boolean hasHardwareKeyboardConfig = config.keyboard != Configuration.KEYBOARD_NOKEYS &&
-//				config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
-//		if (hasHardwareKeyboardConfig) {
-//			return true;
-//		}
-//
-//		return mRenderView.getInputHandler().hasHardwareKeyboard();
+		Configuration config = getResources().getConfiguration();
+		boolean hasHardwareKeyboardConfig = config.keyboard != Configuration.KEYBOARD_NOKEYS &&
+				config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
+		if (hasHardwareKeyboardConfig) {
+			return true;
+		}
+
+		return mRenderView != null &&
+				mRenderView.getInputHandler() != null &&
+				mRenderView.getInputHandler().hasHardwareKeyboard();
 	}
 
 	// ===========================================================
 	// Methods
 	// ===========================================================
 	public void showKeyboard(String p_existing_text, VirtualKeyboardType p_type, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
-		Log.i(TAG,"showKeyboard "+p_existing_text+" "+p_type.toString()+" "+p_max_input_length+" "+p_cursor_start+" "+p_cursor_end);
 		if (hasHardwareKeyboard()) {
 			return;
 		}

@@ -18,7 +18,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -114,9 +113,9 @@ public class StartupActivity extends AppCompatActivity {
     //  提示获取往外部写入文件权限
     private void showAskExternalFileWritePermissionDlg() {
         AlertDialog.Builder normalDialog = new AlertDialog.Builder(this);
-        normalDialog.setTitle("获取读写文件权限");
-        normalDialog.setMessage("获取读写文件权限");
-        normalDialog.setPositiveButton("确定",
+        normalDialog.setTitle(R.string.storage_permission_title);
+        normalDialog.setMessage(R.string.storage_permission_message);
+        normalDialog.setPositiveButton(R.string.storage_permission_confirm,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -131,13 +130,13 @@ public class StartupActivity extends AppCompatActivity {
                         }
                     }
                 });
-        normalDialog.setNegativeButton("取消",
+        normalDialog.setNegativeButton(R.string.storage_permission_cancel,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         //  不允许获取外部文件权限
                         Toast.makeText(StartupActivity.this,
-                                "存储权限获取失败,不能保存文件",
+                                R.string.storage_permission_failed,
                                 Toast.LENGTH_LONG).show();
                         mHandler.sendEmptyMessage(MSG_ID.MSG_ID_INTERNETPERMISSION.ordinal());
                     }

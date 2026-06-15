@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -15,8 +14,6 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 
 public class OblSettingFragment extends View {
-    private final String TAG = "设置页面";
-
     private int mColorBG = Color.valueOf(0.64f, 0.64f, 0.64f).toArgb();
     private int mColorControlBtnTxt = Color.valueOf(1.0f, 1.0f, 1.0f).toArgb();
     private int mColorControlBtnBG = Color.valueOf(0.6f, 0.6f, 0.6f).toArgb();
@@ -251,8 +248,8 @@ public class OblSettingFragment extends View {
         mOBLBtnRMB = new OBLBtn(OBLButtonID.OBLButtonID_RightBtn, "RMB", 1);
         mOBLBtns.add(mOBLBtnRMB);
 
-        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_ScrollUp, "Scr.⬆", 0));
-        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_ScrollDown, "Scr.⬇", 0));
+        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_ScrollUp, "Lăn ↑", 0));
+        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_ScrollDown, "Lăn ↓", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Esc, "Esc", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_F2, "F2", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_F3, "F3", 0));
@@ -280,7 +277,7 @@ public class OblSettingFragment extends View {
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_M, "M", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_COMMA, ",", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_PEROID, ".", 0));
-        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Space, "Spac.", 0));
+        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Space, "Cách", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_PgUp, "PgUp.", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_PgDn, "PgDn.", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_UpArrow, "↑", 0));
@@ -288,7 +285,7 @@ public class OblSettingFragment extends View {
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_LeftArrow, "←", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_RightArrow, "→", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Tab, "Tab", 0));
-        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Delete, "Del.", 0));
+        mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_Delete, "Xóa", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_R, "R", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_S, "S", 0));
         mOBLBtns.add(new OBLBtn(OBLButtonID.OBLButtonID_G, "G", 0));
@@ -320,11 +317,11 @@ public class OblSettingFragment extends View {
             mOBLBtns.get(i).setPosition(index / mIntTotalColumn, index % mIntTotalColumn,pageIndex);
         }
 
-        mOBLControlBtnPage1 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE1, "Page 1");
-        mOBLControlBtnPage2 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE2, "Page 2");
-        mOBLControlBtnPage3 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE3, "Page 3");
-        mOBLControlBtnMove=new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_MOVE,"Move");
-        mOBLControlBtnClose = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_CLOSE, "Close");
+        mOBLControlBtnPage1 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE1, "Trang 1");
+        mOBLControlBtnPage2 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE2, "Trang 2");
+        mOBLControlBtnPage3 = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_PAGE3, "Trang 3");
+        mOBLControlBtnMove=new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_MOVE,"Di chuyển");
+        mOBLControlBtnClose = new OBLControlBtn(OBLControlBtnID.OBL_CONTROL_BTN_ID_CLOSE, "Đóng");
 
         mOBLControlBtnPage1.setSelected(true);
         mOBLControlBtnPage2.setSelected(false);
@@ -333,29 +330,19 @@ public class OblSettingFragment extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        Log.i(TAG, "绘制 1");
         super.onDraw(canvas);
-        Log.i(TAG, "绘制 2");
         //  绘制键盘按钮
         int getWidthValue = getWidth();
-        Log.i(TAG, "绘制 3");
         if ((mIntWidth <= 0) && (getWidthValue > 0)) {
-            Log.i(TAG, "绘制 4");
             mIntWidth = getWidthValue;
-            Log.i(TAG, "绘制 5");
             mIntHeight = getHeight();
-            Log.i(TAG, "绘制 6");
             initialOBLBtnGeometry();
-            Log.i(TAG, "绘制 7");
         }
         if (mIntWidth > 0) {
             mPaint.setColor(mColorBG);
             canvas.drawRect(0, 0, mIntWidth, mIntHeight, mPaint);
-            Log.i(TAG, "绘制 9");
             renderOBLBtns(canvas, mPaint);
-            Log.i(TAG, "绘制 10");
         }
-        Log.i(TAG, "绘制 12");
     }
 
     private void initialOBLBtnGeometry() {

@@ -10,8 +10,8 @@ android {
         applicationId "com.epai.oblender"
         minSdkVersion 28
         targetSdkVersion 30
-        versionCode 2
-        versionName "0.0.3"
+        versionCode 6
+        versionName "0.0.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
@@ -152,7 +152,7 @@ android {
         variant ->
             variant.outputs.all {
                 //在这里修改apk文件名
-                outputFileName = "blender on Android v${variant.versionName}.apk"
+                outputFileName = "Blender Android VN v${variant.versionName}.apk"
             }
     }
 }

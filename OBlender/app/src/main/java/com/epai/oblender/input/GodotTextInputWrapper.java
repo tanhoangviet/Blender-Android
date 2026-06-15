@@ -35,7 +35,6 @@ package com.epai.oblender.input;
 import android.content.Context;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -50,7 +49,6 @@ public class GodotTextInputWrapper implements TextWatcher, OnEditorActionListene
 	// ===========================================================
 	// Constants
 	// ===========================================================
-	private static final String TAG = GodotTextInputWrapper.class.getSimpleName();
 
 	// ===========================================================
 	// Fields
@@ -139,7 +137,6 @@ public class GodotTextInputWrapper implements TextWatcher, OnEditorActionListene
 //		}
 
 		String stringInfo=mEdit.getText().toString();
-		Log.i(TAG,"输入的字符串"+stringInfo);
 		int count=stringInfo.length();
 		int[] newChars = new int[count];
 		for (int i = 0; i <  count; ++i) {
@@ -147,7 +144,6 @@ public class GodotTextInputWrapper implements TextWatcher, OnEditorActionListene
 		}
 		for (int i = 0; i < count; ++i) {
 			final int character = newChars[i];
-			Log.i(TAG,"输入的字符串 字符"+character);
 			GodotLib.key(0, character, 0, true, false);
 			GodotLib.key(0, character, 0, false, false);
 		}

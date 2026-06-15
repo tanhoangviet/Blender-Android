@@ -68,6 +68,8 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 
 	private final GodotRenderView mRenderView;
 	private final InputManager mInputManager;
+	private HardwareKeyboardListener mHardwareKeyboardListener;
+	private boolean mLastHardwareKeyboardConnected = false;
 //	private final GestureDetector gestureDetector;
 //	private final ScaleGestureDetector scaleGestureDetector;
 //	private final GodotGestureHandler godotGestureHandler;
@@ -78,6 +80,10 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 	private int lastSeenToolType = MotionEvent.TOOL_TYPE_UNKNOWN;
 
 	private static int rotaryInputAxis = ROTARY_INPUT_VERTICAL_AXIS;
+
+	public interface HardwareKeyboardListener {
+		void onHardwareKeyboardChanged(boolean connected);
+	}
 
 	public GodotInputHandler(GodotRenderView godotView) {
 		mRenderView = godotView;
@@ -91,6 +97,12 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 //		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 //			this.scaleGestureDetector.setStylusScaleEnabled(true);
 //		}
+	}
+
+	public void destroy() {
+		if (mInputManager != null) {
+			mInputManager.unregisterInputDeviceListener(this);
+		}
 	}
 
 	/**
@@ -116,8 +128,33 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 		rotaryInputAxis = axis;
 	}
 
-	boolean hasHardwareKeyboard() {
+	public boolean hasHardwareKeyboard() {
 		return !mHardwareKeyboardIds.isEmpty();
+	}
+
+	public void setHardwareKeyboardListener(HardwareKeyboardListener listener) {
+		mHardwareKeyboardListener = listener;
+		notifyHardwareKeyboardChanged();
+	}
+
+	private void notifyHardwareKeyboardChanged() {
+		boolean connected = hasHardwareKeyboard();
+		if (connected == mLastHardwareKeyboardConnected) {
+			return;
+		}
+		mLastHardwareKeyboardConnected = connected;
+		if (mHardwareKeyboardListener != null) {
+			mHardwareKeyboardListener.onHardwareKeyboardChanged(connected);
+		}
+	}
+
+	private boolean isHardwareKeyboardDevice(InputDevice device) {
+		if (device == null) {
+			return false;
+		}
+		return device.supportsSource(InputDevice.SOURCE_KEYBOARD) &&
+				device.isExternal() &&
+				device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
 	}
 
 	private boolean isKeyEventGameDevice(int source) {
@@ -290,6 +327,7 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 //			}
 			onInputDeviceAdded(deviceId);
 		}
+		notifyHardwareKeyboardChanged();
 	}
 
 	private int assignJoystickIdNumber(int deviceId) {
@@ -316,11 +354,9 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 		}
 
 		// Device may be an external keyboard; store the device id
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-				device.supportsSource(InputDevice.SOURCE_KEYBOARD) &&
-				device.isExternal() &&
-				device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC) {
+		if (isHardwareKeyboardDevice(device)) {
 			mHardwareKeyboardIds.add(deviceId);
+			notifyHardwareKeyboardChanged();
 		}
 
 		// Device may not be a joystick or gamepad
@@ -370,7 +406,9 @@ public class GodotInputHandler implements InputManager.InputDeviceListener {
 
 	@Override
 	public void onInputDeviceRemoved(int deviceId) {
-		mHardwareKeyboardIds.remove(deviceId);
+		if (mHardwareKeyboardIds.remove(deviceId)) {
+			notifyHardwareKeyboardChanged();
+		}
 
 		// Check if the device has not been already removed
 		if (mJoystickIds.indexOfKey(deviceId) < 0) {

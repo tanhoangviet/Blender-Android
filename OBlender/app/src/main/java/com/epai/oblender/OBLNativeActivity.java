@@ -7,6 +7,7 @@ import android.app.NativeActivity;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.net.Uri;
@@ -77,6 +78,7 @@ public class OBLNativeActivity extends NativeActivity
 
     private OblSettingFragment mOblSettingFragment = null;
     private boolean mBooleanLastOblSettingFragmentVisible=false;
+    private boolean mHardwareKeyboardConnected=false;
 
     public String getClipboard(boolean selection){
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -121,20 +123,19 @@ public class OBLNativeActivity extends NativeActivity
     }
 
     public void showWindow(int left, int top, int width, int height, int shape_type,String stringInfo) {
-        Log.i("OBLNativeActivity", "打开窗体 1" + " " + shape_type + " " + width);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.i("OBLNativeActivity", "打开窗体 2" + " " + shape_type + " " + width);
                 if(shape_type==3000){
-                    //  打开键盘
                     showKeyboardApp(stringInfo,left,top,width,height);
                 }else if (shape_type==4000){
-                    //  关闭键盘
                     hideKeyboardApp();
                 }
                 else if (shape_type == 1001) {
-                    //  左上角窗口
+                    if (hasHardwareKeyboardConnected()) {
+                        hideVirtualKeyboardWindows();
+                        return;
+                    }
                     if (mOblSettingFragment == null) {
 
                         mOblSettingFragment = new OblSettingFragment(OBLNativeActivity.this);
@@ -201,40 +202,26 @@ public class OBLNativeActivity extends NativeActivity
                         if (mWindowFragmentMap.containsKey(shape_type)) {
                             mWindowFragmentMap.get(shape_type).setVisibility(View.VISIBLE);
                         } else {
-                            Log.i("OBLNativeActivity", "打开窗体 3" + " " + shape_type + " " + width);
                             WindowGLSurfaceView windowFragment = new WindowGLSurfaceView(OBLNativeActivity.this.getBaseContext());
-                            Log.i("OBLNativeActivity", "打开窗体 3 1" + " " + shape_type + " " + width);
                             windowFragment.setListener(OBLNativeActivity.this);
-                            Log.i("OBLNativeActivity", "打开窗体 3 2" + " " + shape_type + " " + width + windowFragment);
                             mWindowFragmentMap.put(shape_type, windowFragment);
-                            Log.i("OBLNativeActivity", "打开窗体 3 3" + " " + shape_type + " " + width);
                             LayoutParams lp = new LayoutParams();
-                            Log.i("OBLNativeActivity", "打开窗体 3 4" + " " + shape_type + " " + width);
                             lp.type = LayoutParams.TYPE_APPLICATION_PANEL;
-                            Log.i("OBLNativeActivity", "打开窗体 3 5" + " " + shape_type + " " + width);
                             lp.flags = LayoutParams.FLAG_NOT_FOCUSABLE |
                                     LayoutParams.FLAG_NOT_TOUCHABLE |
                                     LayoutParams.FLAG_NOT_TOUCH_MODAL |
                                     LayoutParams.FLAG_ALT_FOCUSABLE_IM;
-                            //   重要修改 ，将窗体修改成这种 FLAG_ALT_FOCUSABLE_IM ，才能在子窗体中弹出键盘，并且键盘在子窗体之上
-                            Log.i("OBLNativeActivity", "打开窗体 3 6" + " " + shape_type + " " + width);
                             getWindowManager().addView(windowFragment, lp);
-                            Log.i("OBLNativeActivity", "打开窗体 4" + " " + shape_type + " " + width);
                         }
                     } else {
-                        Log.i("OBLNativeActivity", "打开窗体 5" + " " + shape_type + " " + width);
 //                    WindowWindow windowFragment = mWindowFragmentMap.get(shape_type);
 //                    windowFragment.getDialog().show();
 //                    mWindowFragmentMap.get(shape_type).setVisibility(View.VISIBLE);
-                        Log.i("OBLNativeActivity", "打开窗体 6" + " " + shape_type + " " + width);
                         if (mWindowFragmentMap.containsKey(shape_type)) {
                             mWindowFragmentMap.get(shape_type).setVisibility(View.INVISIBLE);
-                            Log.i("OBLNativeActivity", "打开窗体 7" + " " + shape_type + " " + width);
 //                        int lastIndex=mWindowFragmentMap.size()-1;
-                            Log.i("OBLNativeActivity", "打开窗体 8" + " " + shape_type + " " + width);
 //                        if (mWindowFragmentMap.get(lastIndex).getVisibility()==View.VISIBLE)
                             {
-                                Log.i("OBLNativeActivity", "打开窗体 9" + " " + shape_type + " " + width);
 //                            WindowGLSurfaceView windowGLSurfaceView=mWindowFragmentMap.get(lastIndex);
 //                            WindowManager.LayoutParams params=(WindowManager.LayoutParams)windowGLSurfaceView.getLayoutParams();
 //                            params.type=LayoutParams.TYPE_APPLICATION;
@@ -242,7 +229,6 @@ public class OBLNativeActivity extends NativeActivity
 //                            getWindowManager().removeView(windowGLSurfaceView);
 //                            mWindowFragmentMap.remove(lastIndex);
 //                            windowGLSurfaceView=null;
-                                Log.i("OBLNativeActivity", "打开窗体 10" + " " + shape_type + " " + width);
                             }
                         }
                     }
@@ -356,6 +342,14 @@ public class OBLNativeActivity extends NativeActivity
         super.onPause();
     }
 
+    @Override
+    protected void onDestroy() {
+        if (inputHandler != null) {
+            inputHandler.destroy();
+        }
+        super.onDestroy();
+    }
+
 
     @Override
     protected void onStart() {
@@ -368,6 +362,13 @@ public class OBLNativeActivity extends NativeActivity
     private void initialEditText(){
         if (mGodotEditText==null){
             inputHandler = new GodotInputHandler(this);
+            inputHandler.setHardwareKeyboardListener(new GodotInputHandler.HardwareKeyboardListener() {
+                @Override
+                public void onHardwareKeyboardChanged(boolean connected) {
+                    handleHardwareKeyboardChanged(connected);
+                }
+            });
+            inputHandler.initInputDevices();
 
             mGodotEditText=new GodotEditText(OBLNativeActivity.this);
 
@@ -393,21 +394,57 @@ public class OBLNativeActivity extends NativeActivity
     }
 
     public void showKeyboardApp(String p_existing_text, int p_type, int p_max_input_length, int p_cursor_start, int p_cursor_end) {
-        Log.i(TAG,"showKeyboardApp 1 "+p_existing_text+" "+p_type+" "+p_max_input_length+" "+p_cursor_start+" "+p_cursor_start);
+        if (hasHardwareKeyboardConnected()) {
+            hideKeyboardApp();
+            return;
+        }
         if (mGodotEditText != null) {
             mGodotEditText.showKeyboard(p_existing_text, GodotEditText.VirtualKeyboardType.values()[p_type], p_max_input_length, 0, p_existing_text.length());
         }
-        Log.i(TAG,"showKeyboardApp 2");
 
         InputMethodManager inputMgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        inputMgr.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        if (inputMgr != null && mGodotEditText != null) {
+            inputMgr.showSoftInput(mGodotEditText, InputMethodManager.SHOW_IMPLICIT);
+        }
     }
 
     public void hideKeyboardApp() {
-        if (mGodotEditText != null)
-            Log.i(TAG,"showKeyboardApp 3");
+        if (mGodotEditText != null) {
             mGodotEditText.hideKeyboard();
-        Log.i(TAG,"showKeyboardApp 4");
+            InputMethodManager inputMgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (inputMgr != null) {
+                inputMgr.hideSoftInputFromWindow(mGodotEditText.getWindowToken(), 0);
+            }
+            mGodotEditText.setVisibility(View.GONE);
+        }
+    }
+
+    private boolean hasHardwareKeyboardConnected() {
+        Configuration config = getResources().getConfiguration();
+        boolean hasHardwareKeyboardConfig = config.keyboard != Configuration.KEYBOARD_NOKEYS &&
+                config.hardKeyboardHidden == Configuration.HARDKEYBOARDHIDDEN_NO;
+        return mHardwareKeyboardConnected ||
+                hasHardwareKeyboardConfig ||
+                (inputHandler != null && inputHandler.hasHardwareKeyboard());
+    }
+
+    private void handleHardwareKeyboardChanged(boolean connected) {
+        mHardwareKeyboardConnected = connected;
+        if (connected) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    hideVirtualKeyboardWindows();
+                }
+            });
+        }
+    }
+
+    private void hideVirtualKeyboardWindows() {
+        hideKeyboardApp();
+        if (mOblSettingFragment != null) {
+            mOblSettingFragment.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -417,7 +454,9 @@ public class OBLNativeActivity extends NativeActivity
 
     @Override
     public void initInputDevices() {
-
+        if (inputHandler != null) {
+            inputHandler.initInputDevices();
+        }
     }
 
     @Override

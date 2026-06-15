@@ -2,7 +2,6 @@ package com.epai.oblfiles;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,27 +9,22 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public class InstallOBLFiles {
-    private final String TAG="InstallOBLFiles";
     private boolean copyAsset(AssetManager theAssetMgr,
                               String thePathFrom,
                               String thePathTo) {
-        try {
-            Log.i(TAG,"copyAsset 1 "+thePathFrom+" "+thePathTo);
+        try (InputStream aStreamIn = theAssetMgr.open(thePathFrom)) {
             File aFileTo = new File(thePathTo);
-            InputStream aStreamIn = theAssetMgr.open(thePathFrom);
-            boolean newFile = aFileTo.createNewFile();
-            if (!newFile) {
+            File parent = aFileTo.getParentFile();
+            if (parent != null && !parent.exists() && !parent.mkdirs()) {
                 return false;
             }
-            Log.i(TAG,"copyAsset 2 "+thePathFrom+" "+thePathTo);
-            OutputStream aStreamOut = new FileOutputStream(thePathTo);
-            FileUtils.copyStreamContent(aStreamIn, aStreamOut);
-            aStreamIn.close();
-            aStreamIn = null;
-            aStreamOut.flush();
-            aStreamOut.close();
-            aStreamOut = null;
-            Log.i(TAG,"copyAsset 3 "+thePathFrom+" "+thePathTo);
+            if (aFileTo.exists() && aFileTo.length() > 0) {
+                return true;
+            }
+            try (OutputStream aStreamOut = new FileOutputStream(thePathTo)) {
+                FileUtils.copyStreamContent(aStreamIn, aStreamOut);
+                aStreamOut.flush();
+            }
             return true;
         } catch (Exception theError) {
             theError.printStackTrace();
@@ -41,27 +35,30 @@ public class InstallOBLFiles {
                                     String theAssetFolder,
                                     String theFolderPathTo) {
         try {
-            Log.i(TAG,"copyAssetFolder 1 "+theAssetFolder+" "+theFolderPathTo);
             String[] aFiles = theAssetMgr.list(theAssetFolder);
+            if (aFiles == null) {
+                return false;
+            }
             File aFolder = new File(theFolderPathTo);
             if (aFolder.exists()){
                 return true;
             }
-            boolean mkdirs = aFolder.mkdirs();
+            if (!aFolder.exists() && !aFolder.mkdirs()) {
+                return false;
+            }
             boolean isOk = true;
             for (String aFileIter : aFiles) {
-                Log.i(TAG,"copyAssetFolder 2 "+theAssetFolder+" "+theFolderPathTo+" "+theAssetFolder+File.separator+aFileIter);
-                if (theAssetMgr.list(theAssetFolder+File.separator+aFileIter).length<1) {
+                String assetPath = theAssetFolder + "/" + aFileIter;
+                if (theAssetMgr.list(assetPath).length<1) {
                     String stringFilePathTo = theFolderPathTo + "/" + aFileIter;
                     if (!FileUtils.exist(stringFilePathTo)) {
-                        Log.i(TAG,"copyAssetFolder 3 "+theAssetFolder+" "+theFolderPathTo);
                         isOk &= copyAsset(theAssetMgr,
-                                theAssetFolder + "/" + aFileIter,
+                                assetPath,
                                 stringFilePathTo);
                     }
                 } else {
                     isOk &= copyAssetFolder(theAssetMgr,
-                            theAssetFolder + "/" + aFileIter,
+                            assetPath,
                             theFolderPathTo + "/" + aFileIter);
                 }
             }
@@ -97,6 +94,9 @@ public class InstallOBLFiles {
             for (String stringFolder : stringsAppRootFilesFolders) {
                 copyAssetFolder(assetManager, stringFolder, oblFilePath.mStringConfigPath  + stringFolder);
             }
+            copyAsset(assetManager,
+                    "scripts/obl_vn_startup.py",
+                    oblFilePath.mStringConfigPath + "scripts" + File.separator + "obl_vn_startup.py");
         }
         return oblFilePath;
     }

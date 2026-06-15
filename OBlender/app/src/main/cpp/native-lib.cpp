@@ -20,6 +20,7 @@
 #include <memory>
 #include <cstdlib>
 #include <cstring>
+#include <clocale>
 #include <jni.h>
 #include <cerrno>
 #include <cassert>
@@ -68,6 +69,10 @@ static int engine_init_display(struct android_app *app) {
 
     BLI_setenv("XDG_CACHE_HOME", strHomePath);
     BLI_setenv("HOME",           strHomePath);
+    BLI_setenv("LANG",           "vi_VN.UTF-8");
+    BLI_setenv("LANGUAGE",       "vi");
+    BLI_setenv("LC_ALL",         "vi_VN.UTF-8");
+    setlocale(LC_ALL, "vi_VN.UTF-8");
     LOGI("路径 %s %s",strConfigPath,strHomePath);
 
 
@@ -92,9 +97,12 @@ static int engine_init_display(struct android_app *app) {
     char blenderpath[256]={0};
     strcat(blenderpath,strHomePath);
     strcat(blenderpath,"blender");
+    char startupScriptPath[256]={0};
+    strcat(startupScriptPath,strConfigPath);
+    strcat(startupScriptPath,"scripts/obl_vn_startup.py");
     const char *argv1 = blenderpath;
-    const char *argv[2] = {argv1,"-d"};
-    userData->pContext=mainBlenderInitial(2, (const char **) (argv));
+    const char *argv[3] = {argv1,"--python", startupScriptPath};
+    userData->pContext=mainBlenderInitial(3, (const char **) (argv));
     isInitial=true;
     return 0;
 }

@@ -208,17 +208,6 @@ static void android_app_destroy(struct android_app *android_app) {
 static void process_input(struct android_app *app, struct android_poll_source *source) {
     AInputEvent *event = nullptr;
     while (AInputQueue_getEvent(app->inputQueue, &event) >= 0) {
-        int inputEventType = AInputEvent_getType(event);
-        int32_t action=AKeyEvent_getAction(event);
-        int32_t flags=AKeyEvent_getFlags(event);
-        int32_t keyCode=AKeyEvent_getKeyCode(event);
-        int32_t scanCode=AKeyEvent_getScanCode(event);
-        int32_t metaState=AKeyEvent_getMetaState(event);// AMETA_CTRL_ON
-        int32_t repeatCount=AKeyEvent_getRepeatCount(event);
-        int32_t downTime=AKeyEvent_getDownTime(event);
-        LOGI("OBL process_input  ------ 1 ------ %d %d %d %d %d %d %d %d",
-                inputEventType,action,flags,keyCode,scanCode,metaState,repeatCount,downTime);
-
         // Hardware volume keys are not handled by the engine
         //  修改 将 声音按键 消息传递到底层 ，由底层处理，但底层返回 0 这样才能在 声音按键点击时 打开声音调节响应页面
 //        if (keyCode == AKEYCODE_VOLUME_UP || keyCode == AKEYCODE_VOLUME_DOWN || keyCode=AKEYCODE_POWER)
@@ -238,7 +227,6 @@ static void process_input(struct android_app *app, struct android_poll_source *s
         if (AInputQueue_preDispatchEvent(app->inputQueue, event)) {
             continue;
         }
-        LOGI("OBL process_input  ------ 2 ------ ");
         int32_t handled = 0;
         if (app->onInputEvent != nullptr) handled = app->onInputEvent(app, event);
         AInputQueue_finishEvent(app->inputQueue, event, handled);

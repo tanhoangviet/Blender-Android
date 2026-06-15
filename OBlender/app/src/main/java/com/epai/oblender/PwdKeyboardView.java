@@ -8,9 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.KeyboardView;
 import android.util.AttributeSet;
-import android.util.Log;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,9 +16,6 @@ import java.util.List;
  */
 
 public class PwdKeyboardView extends KeyboardView implements KeyboardView.OnKeyboardActionListener {
-
-    private static final String TAG = "PwdKeyboardView";
-
 
     private static final int KEY_EMPTY = -10;
 
@@ -30,14 +25,12 @@ public class PwdKeyboardView extends KeyboardView implements KeyboardView.OnKeyb
 
     public PwdKeyboardView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        Log.d(TAG, "PwdKeyboardView: two params");
         init(context);
 
     }
 
     public PwdKeyboardView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Log.d(TAG, "PwdKeyboardView: three params");
         init(context);
     }
 
@@ -142,7 +135,6 @@ public class PwdKeyboardView extends KeyboardView implements KeyboardView.OnKeyb
 
                 break;
         }
-        Log.d(TAG, "onKey: primaryCode = " + primaryCode + ", keyCodes = " + Arrays.toString(keyCodes));
         if (primaryCode == KEY_EMPTY) {
             return;
         }

@@ -224,7 +224,7 @@ public final class FileUtils {
     //! Copy single file
     public static void copyStreamContent(InputStream theIn,
                                          OutputStream theOut) throws IOException {
-        byte[] aBuffer = new byte[1024];
+        byte[] aBuffer = new byte[64 * 1024];
         int aNbReadBytes = 0;
         while ((aNbReadBytes = theIn.read(aBuffer)) != -1) {
             theOut.write(aBuffer, 0, aNbReadBytes);

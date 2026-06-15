@@ -1,8 +1,12 @@
 <resources>
-    <string name="app_name">blender on Android</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="title_activity_startup">FullscreenActivity</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="app_name">Blender Android VN</string>
+    <string name="hello_blank_fragment">Bảng điều khiển</string>
+    <string name="title_activity_startup">Khởi động Blender</string>
+    <string name="dummy_button">Nút</string>
+    <string name="dummy_content">NỘI DUNG</string>
+    <string name="storage_permission_title">Cấp quyền đọc ghi tệp</string>
+    <string name="storage_permission_message">Blender cần quyền đọc ghi tệp để lưu dự án và cài dữ liệu khởi động.</string>
+    <string name="storage_permission_confirm">Đồng ý</string>
+    <string name="storage_permission_cancel">Hủy</string>
+    <string name="storage_permission_failed">Không có quyền lưu trữ, app có thể không lưu được tệp.</string>
 </resources>
